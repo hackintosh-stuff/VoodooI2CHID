@@ -326,14 +326,15 @@ IOReturn VoodooI2CHIDDevice::resetHIDDeviceGated() {
     nanoseconds_to_absolutetime(5000000000, &absolute_time);
 
     read_in_progress = false;
-
-    IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time);
-
-    if (sleep == THREAD_TIMED_OUT) {
-        IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
-        return kIOReturnTimeout;
+    
+    if (work_loop->inGate()) {
+        IOReturn sleep = command_gate->commandSleep(&reset_event, absolute_time);
+        if (sleep == THREAD_TIMED_OUT) {
+            IOLog("%s::%s Timeout waiting for device to complete host initiated reset\n", getName(), name);
+            return kIOReturnTimeout;
+        }
     }
-
+    
     return kIOReturnSuccess;
 }
 
